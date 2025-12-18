@@ -1,52 +1,49 @@
-# bot.py
+# main.py
 import discord
 from discord.ext import commands
-from datetime import datetime, timezone
+from cryptography.fernet import Fernet
+import base64
 
-# === НАСТРОЙКИ ===
-TOKEN = "MTI0ODY2Njk5NTczODgwODQ2MQ.GAMf2s.jtvYfgO9D30wGGzvoJF7Fn0e7Oh4NZiuJQ8LJU"  # ← ЗАМЕНИ НА СВОЙ ТОКЕН!
-VOICE_CHANNEL_ID = 1440353376822104184  # ← ЗАМЕНИ НА ID ТВОЕГО ГОЛОСОВОГО КАНАЛА
+VOICE_CHANNEL_ID = 1440353376822104184
 
-# === НАСТРОЙКА БОТА ===
+# Вставь СЮДА свой ENCRYPTED_TOKEN из encrypt.py
+ENCRYPTED_TOKEN = b'gAAAAABpQ-QdIwxnPX3SvVdc7bhpJacmTaabifK7eO7oCjFNzZUIXszgJXCn2Lw8oYowpfsm0MerCauN-GEZ00KIMkU7M1BIOuJLjo7_oJqn-bpSXCgh4OgxxO_LW02JSmRVCSB6qZR3z0RwRnm37cQmoVLBTcWL_nnIgmAzcYJC3PbxWKrYaBU='
+
+# Вставь СЮДА свои части из encrypt.py
+p1 = "my_super"
+p2 = "_secret_"
+p3 = "key_for_"
+p4 = "bot_2025"
+
+raw_key = (p1 + p2 + p3 + p4)[:32].encode()
+key = base64.urlsafe_b64encode(raw_key.ljust(32, b'0'))
+
+try:
+    cipher = Fernet(key)
+    TOKEN = cipher.decrypt(ENCRYPTED_TOKEN).decode()
+except Exception as e:
+    print("❌ Ошибка расшифровки:", e)
+    exit(1)
+
+# ... остальной код бота (как у тебя был)
 intents = discord.Intents.default()
 intents.voice_states = True
 intents.message_content = True
 
-bot = commands.Bot(
-    command_prefix="!",
-    intents=intents,
-    status=discord.Status.online,
-    activity=discord.Game(name="Visual Studio Code")  # → «Играет в Visual Studio Code»
-)
+bot = commands.Bot(command_prefix="!", intents=intents, activity=discord.Game(name="Visual Studio Code"))
 
 @bot.event
 async def on_ready():
-    print(f'✅ {bot.user} запущен и в сети!')
-    
-    # Подключаемся к голосовому каналу
+    print(f'✅ {bot.user} запущен!')
     channel = bot.get_channel(VOICE_CHANNEL_ID)
-    if not channel:
-        print("❌ Голосовой канал не найден! Проверь ID.")
-        return
-
-    if channel.guild.voice_client:
-        print("🔊 Уже в голосовом канале.")
-        return
-
-    try:
+    if channel and not channel.guild.voice_client:
         await channel.connect()
-        print(f'🎧 Подключился к голосовому каналу: {channel.name}')
-    except Exception as e:
-        print(f"⚠️ Ошибка подключения: {e}")
+        print(f'🎧 Подключён к: {channel.name}')
 
-# Команда для выхода из голоса
 @bot.command()
 async def leave(ctx):
     if ctx.voice_client:
         await ctx.voice_client.disconnect()
         await ctx.send("Вышел из голосового канала.")
-    else:
-        await ctx.send("Я не в голосе.")
 
-# Запуск
 bot.run(TOKEN)
