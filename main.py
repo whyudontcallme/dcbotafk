@@ -15,7 +15,7 @@ intents = discord.Intents.default()
 intents.voice_states = True
 intents.message_content = True
 
-bot = commands.Bot(command_prefix="!", intents=intents, activity=discord.Game(name="VS Code"))
+bot = commands.Bot(command_prefix="!", intents=intents, activity=discord.Game(name="Visual Studio Code"))
 
 @bot.event
 async def on_ready():
@@ -30,3 +30,4 @@ async def leave(ctx):
         await ctx.voice_client.disconnect()
 
 bot.run(TOKEN)
+
